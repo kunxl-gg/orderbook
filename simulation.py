@@ -8,17 +8,17 @@ from strategy import Strategy
 
 class OptionSimulator:
 	def __init__(self, symbol: str, start: dt.date, end: dt.date, capital: int):
-		self.initial_capital = capital
+		self.symbol = symbol
 		self.capital = capital
+		self.initial_capital = capital
+
 		self.start = start
 		self.today = start
 		self.end = end
-		self.symbol = symbol
+
 		self.logger = Logger("active.json", "transaction.json")
 		self.strategy = Strategy(self, 0, 0)
-		self.fetch_data()
 
-	def fetch_data(self):
 		nifty = yf.download(self.symbol, self.start, self.end)
 		if nifty is None or nifty.empty:
 			raise ValueError(f"No data for {self.symbol} from {self.start} to {self.end}.")
@@ -43,7 +43,7 @@ class OptionSimulator:
 			self.capital -= self.strategy.margin
 
 		# Record the transaction.
-		transaction_id = f"{"TXN"}-{uuid.uuid4().hex[:8]}"
+		transaction_id = f"TXN-{uuid.uuid4().hex[:8]}"
 		self.logger.record_transaction(transaction_id, type, strike_price, expiry)
 
 	def exit(self, type, transaction_id):
@@ -65,7 +65,7 @@ class OptionSimulator:
 		self.capital += profit
 
 		# Record the transaction.
-		transaction_id = f"{"TXN"}-{uuid.uuid4().hex[:8]}"
+		transaction_id = f"TXN-{uuid.uuid4().hex[:8]}"
 		self.logger.record_transaction(transaction_id, type, strike_price, self.today)
 
 	def run(self):
