@@ -35,3 +35,6 @@
 .jukit/
 .venv/
 __pycache__/
+
+# Files
+*.json

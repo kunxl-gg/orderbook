@@ -1,8 +1,10 @@
 import datetime as dt
 import pandas as pd
+import uuid
 import yfinance as yf
 
 from logger import Logger
+from strategy import Strategy
 
 class OptionSimulator:
 	def __init__(self, symbol: str, start: dt.date, end: dt.date, capital: int):
@@ -40,7 +42,11 @@ class OptionSimulator:
 		elif type == "short call" or type == "short put":
 			self.capital -= self.strategy.margin
 
-	def sell(self, type, transaction_id):
+		# Record the transaction.
+		transaction_id = f"{"TXN"}-{uuid.uuid4().hex[:8]}"
+		self.logger.record_transaction(transaction_id, type, strike_price, expiry)
+
+	def exit(self, type, transaction_id):
 		spot_price = self.data.loc[self.today.strftime("%Y-%m-%d %H:%M:%S"), "Close"]
 		strike_price = 1
 		premium = 1
@@ -58,6 +64,10 @@ class OptionSimulator:
 
 		self.capital += profit
 
+		# Record the transaction.
+		transaction_id = f"{"TXN"}-{uuid.uuid4().hex[:8]}"
+		self.logger.record_transaction(transaction_id, type, strike_price, self.today)
+
 	def run(self):
 		while self.today <= self.end:
 			# Check for working days
@@ -67,25 +77,3 @@ class OptionSimulator:
 			# Run the simulation
 			self.strategy.run()
 			self.today += dt.timedelta(days=1)
-
-
-class Strategy:
-	def __init__(self, simulator: OptionSimulator, premium: int, margin: int):
-		self.simulator = simulator
-		self.premium = premium
-		self.margin = margin
-
-	def calculate_premium(self):
-		pass
-
-	def is_expired(self):
-		first_option = self.simulator.logger.first_transaction()
-		return self.simulator.today.isoformat() >= first_option["expiry"]
-
-	def get_option(self):
-		return self.simulator.logger.first_transaction()
-
-	def run(self):
-		while self.is_expired():
-			option = self.simulator.logger.first_transaction()
-			self.simulator.sell(option["type"], option["id"])
