@@ -20,7 +20,7 @@ A simulator for testing and analyzing options trading strategies, focusing on th
    ```
 2. Navigate to the project directory:
    ```bash
-	cd options-trading-simulator
+	cd orderbook
    ```
 1. Install dependencies (if applicable):
    ```bash
