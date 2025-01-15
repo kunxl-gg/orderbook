@@ -12,12 +12,15 @@ class OptionSimulator:
 		self.capital = capital
 		self.initial_capital = capital
 
+		self.end = end
 		self.start = start
 		self.today = start
-		self.end = end
+
+		self.last_transaction = -1
+		self.active_transactions = []
 
 		self.logger = Logger("active.json", "transaction.json")
-		self.strategy = Strategy(self, 0, 0)
+		self.strategy = Strategy(self, 0.1, 0.5)
 
 		nifty = yf.download(self.symbol, self.start, self.end)
 		if nifty is None or nifty.empty:
@@ -25,22 +28,35 @@ class OptionSimulator:
 
 		self.data = yf.download(self.symbol, self.start, self.end)
 
+	def is_holiday(self):
+		return self.today.strftime("%Y-%m-%d %H:%M:%S") not in self.data.index
+
 	def get_price(self):
 		return self.data.loc[self.today.strftime("%Y-%m-%d %H:%M:%S"), "Close"]
 
-	def is_holiday(self):
-		return self.today.strftime("%Y-%m-%d %H:%M:%S") not in self.data.index
+	def get_current_value(self):
+		value = self.capital
+		spot_price = self.get_price()
+		for transaction in self.active_transactions:
+			if transaction["type"] == "long call" or transaction["short put"]:
+				value += (transaction["strike_price"] - spot_price) * transaction["quantity"]
+			elif transaction["type"] == "long put" or transaction["short call"]:
+				value += (spot_price - transaction["strike_price"]) * transaction["quantity"]
+
+		return value
 
 	def buy(self, type, expiry, lot_size):
 		spot_price = self.data.loc[self.today.strftime("%Y-%m-%d %H:%M:%S"), "Close"]
 		strike_price = round(spot_price / 10) * 10
 
 		if type == "long call" or type == "long put":
-			investment = min(self.initial_captial, lot_size * self.strategy.premium)
-			lot_size = investment / self.strategy.premium
-			self.capital -= lot_size * self.strategy.premium
+			investment = min(self.capital, lot_size * self.strategy.premium)
+			lot_size = investment / self.strategy.get_premium()
+			self.capital -= lot_size * self.strategy.get_premium()
 		elif type == "short call" or type == "short put":
-			self.capital -= self.strategy.margin
+			self.capital += self.strategy.get_premium()
+
+		self.last_transaction = self.today
 
 		# Record the transaction.
 		transaction_id = f"TXN-{uuid.uuid4().hex[:8]}"
@@ -48,9 +64,11 @@ class OptionSimulator:
 
 	def exit(self, type, transaction_id):
 		spot_price = self.data.loc[self.today.strftime("%Y-%m-%d %H:%M:%S"), "Close"]
-		strike_price = 1
-		premium = 1
-		quantity = 1
+
+		for transaction in self.active_transactions:
+			if transaction["id"] == transaction_id:
+				quantity = transaction["lot_size"]
+				strike_price = transaction["strike_price"]
 
 		# Here you can make the different P&L calculations
 		if type == "long call":
@@ -58,9 +76,9 @@ class OptionSimulator:
 		elif type == "short call":
 			profit = max(0, spot_price - strike_price) * quantity
 		elif type == "long put":
-			profit = (max(0, strike_price - spot_price) - premium) * quantity
+			profit = max(0, strike_price - spot_price) * quantity
 		elif type == "short put":
-			profit = (premium - max(0, strike_price - spot_price)) * quantity
+			profit = max(0, strike_price - spot_price) * quantity
 
 		self.capital += profit
 
@@ -76,4 +94,7 @@ class OptionSimulator:
 
 			# Run the simulation
 			self.strategy.run()
+			print(f"Current Portfolio Size: ${self.get_current_value():,.2f}\
+		 			as of {self.today.strftime('%B %d, %Y')}")
+
 			self.today += dt.timedelta(days=1)
