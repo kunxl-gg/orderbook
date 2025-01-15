@@ -2,59 +2,90 @@ import datetime as dt
 import pandas as pd
 import yfinance as yf
 
-from strategy import Strategy
+from logger import Logger
 
 class OptionSimulator:
-	def __init__(self, symbol: str, start: dt, end: dt, capital: int):
+	def __init__(self, symbol: str, start: dt.date, end: dt.date, capital: int):
+		self.initial_capital = capital
 		self.capital = capital
-		self.investment = 0
 		self.start = start
 		self.today = start
 		self.end = end
-		self.stock = symbol
-		self.strategy = Strategy()
-
+		self.symbol = symbol
+		self.logger = Logger("active.json", "transaction.json")
+		self.strategy = Strategy(self, 0, 0)
 		self.fetch_data()
 
 	def fetch_data(self):
-		nifty = yf.download(self.stock, self.start, self.end)
+		nifty = yf.download(self.symbol, self.start, self.end)
 		if nifty is None or nifty.empty:
 			raise ValueError(f"No data for {self.symbol} from {self.start} to {self.end}.")
 
-		self.data = yf.download(self.stock, self.start, self.end)
+		self.data = yf.download(self.symbol, self.start, self.end)
 
 	def get_price(self):
 		return self.data.loc[self.today.strftime("%Y-%m-%d %H:%M:%S"), "Close"]
 
-	def make_transaction(self):
-		pass
-
 	def is_holiday(self):
 		return self.today.strftime("%Y-%m-%d %H:%M:%S") not in self.data.index
 
-	def get_current_value(self):
-		pass
-
-	def buy(self, date, allocated_money):
-		spot_price = self.df.loc[self.today.strftime("%Y-%m-%d %H:%M:%S"), "Close"]
+	def buy(self, type, expiry, lot_size):
+		spot_price = self.data.loc[self.today.strftime("%Y-%m-%d %H:%M:%S"), "Close"]
 		strike_price = round(spot_price / 10) * 10
-		quantity = allocated_money / strike_price
-		self.capital -= quantity * self.strategy.premium
-		# Make a transaction
 
-	def sell(self):
-		if (self.today.weekday() == 3):
-			# We sell only on thursdays of a week.
-			pass
+		if type == "long call" or type == "long put":
+			investment = min(self.initial_captial, lot_size * self.strategy.premium)
+			lot_size = investment / self.strategy.premium
+			self.capital -= lot_size * self.strategy.premium
+		elif type == "short call" or type == "short put":
+			self.capital -= self.strategy.margin
+
+	def sell(self, type, transaction_id):
+		spot_price = self.data.loc[self.today.strftime("%Y-%m-%d %H:%M:%S"), "Close"]
+		strike_price = 1
+		premium = 1
+		quantity = 1
+
+		# Here you can make the different P&L calculations
+		if type == "long call":
+			profit = max(0, spot_price - strike_price) * quantity
+		elif type == "short call":
+			profit = max(0, spot_price - strike_price) * quantity
+		elif type == "long put":
+			profit = (max(0, strike_price - spot_price) - premium) * quantity
+		elif type == "short put":
+			profit = (premium - max(0, strike_price - spot_price)) * quantity
+
+		self.capital += profit
 
 	def run(self):
 		while self.today <= self.end:
+			# Check for working days
 			while self.is_holiday():
 				self.today += dt.timedelta(days=1)
+
 			# Run the simulation
+			self.strategy.run()
+			self.today += dt.timedelta(days=1)
 
-			self.today += dt.timedelta(days=7)
 
+class Strategy:
+	def __init__(self, simulator: OptionSimulator, premium: int, margin: int):
+		self.simulator = simulator
+		self.premium = premium
+		self.margin = margin
 
-	def plot(self):
+	def calculate_premium(self):
 		pass
+
+	def is_expired(self):
+		first_option = self.simulator.logger.first_transaction()
+		return self.simulator.today.isoformat() >= first_option["expiry"]
+
+	def get_option(self):
+		return self.simulator.logger.first_transaction()
+
+	def run(self):
+		while self.is_expired():
+			option = self.simulator.logger.first_transaction()
+			self.simulator.sell(option["type"], option["id"])

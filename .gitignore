@@ -33,3 +33,5 @@
 
 # Directories
 .jukit/
+.venv/
+__pycache__/
