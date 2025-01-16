@@ -9,8 +9,11 @@ class Strategy:
 		self.premium = premium
 		self.margin = margin
 
-	def get_premium(self):
-		return self.premium * self.simulator.get_price()
+	def get_premium(self, type):
+		if type == "long call":
+			return 4 * self.premium * self.simulator.get_price()
+		elif type == "short call":
+			return self.premium * self.simulator.get_price()
 
 	def is_expired(self, transaction):
 		return self.simulator.today >= transaction["expiry"]
