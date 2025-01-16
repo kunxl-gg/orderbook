@@ -15,6 +15,7 @@ class OptionSimulator:
 		self.start = start
 		self.today = start
 
+		self.long_call = False
 		self.last_transaction = -1
 		self.active_transactions = []
 
@@ -52,8 +53,9 @@ class OptionSimulator:
 			investment = min(self.capital, lot_size * self.strategy.premium)
 			lot_size = investment / self.strategy.get_premium(type)
 			self.capital -= lot_size * self.strategy.get_premium(type)
+			self.long_call = True
 		elif type == "short call":
-			self.capital += self.strategy.get_premium()
+			self.capital += self.strategy.get_premium() * lot_size
 
 		self.last_transaction = self.today
 
@@ -77,6 +79,10 @@ class OptionSimulator:
 				quantity = transaction["quantity"]
 				strike_price = transaction["strike_price"]
 				del self.active_transactions[i]
+
+				if transaction["type"] == "long call":
+					self.long_call = False
+
 				break
 
 		# Here you can make the different P&L calculations
