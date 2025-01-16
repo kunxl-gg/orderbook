@@ -1,4 +1,7 @@
+import csv
 import datetime as dt
+import matplotlib.pyplot as plt
+import logging
 import pandas as pd
 import uuid
 import yfinance as yf
@@ -19,7 +22,7 @@ class OptionSimulator:
 		self.last_transaction = -1
 		self.active_transactions = []
 
-		self.logger = Logger("transaction.log")
+		self.logger = Logger("transaction.csv", "revenue.csv")
 		self.strategy = Strategy(self, 0.01, 0.05)
 
 		nifty = yf.download(self.symbol, self.start, self.end)
@@ -72,7 +75,7 @@ class OptionSimulator:
 		self.active_transactions.append(transaction)
 
 	def exit(self, type, transaction_id):
-		spot_price = self.data.loc[self.today.strftime("%Y-%m-%d %H:%M:%S"), "Close"]
+		spot_price = self.get_price()
 
 		for i, transaction in enumerate(self.active_transactions):
 			if transaction["id"] == transaction_id:
@@ -87,13 +90,13 @@ class OptionSimulator:
 
 		# Here you can make the different P&L calculations
 		if type == "long call":
-			profit = (spot_price - strike_price).clip(lower=0) * quantity
+			profit = min(0, spot_price - strike_price) * quantity
 		elif type == "short call":
-			profit = (spot_price - strike_price).clip(lower=0) * quantity
+			profit = min(0, spot_price - strike_price) * quantity
 		elif type == "long put":
-			profit = (strike_price - spot_price).clip(lower=0) * quantity
+			profit = min(0, strike_price - spot_price) * quantity
 		elif type == "short put":
-			profit = (strike_price - spot_price).clip(lower=0) * quantity
+			profit = min(0, strike_price - spot_price) * quantity
 
 
 		self.capital += profit
@@ -101,6 +104,36 @@ class OptionSimulator:
 		# Record the transaction.
 		transaction_id = f"TXN-{uuid.uuid4().hex[:8]}"
 		self.logger.record_transaction(transaction_id, type, strike_price, self.today)
+
+	def plot(self):
+		# Lists to store data
+		dates = []
+		capitals = []
+
+		# Read the CSV file
+		with open("revenue.csv", 'r') as f:
+			reader = csv.reader(f)
+			data = list(reader)
+
+			for row in range(1, len(data), 100):
+				dates.append(data[row][1])
+				capitals.append(float(data[row][0]))
+
+		# Plot the data
+		plt.figure(figsize=(10, 6))
+		plt.plot(dates, capitals, label='Capital Over Time', marker='o')
+
+		# Formatting
+		plt.title('Capital vs. Date', fontsize=16)
+		plt.xlabel('Date', fontsize=14)
+		plt.ylabel('Capital', fontsize=14)
+		plt.xticks(rotation=45)
+		plt.grid(True)
+		plt.legend(fontsize=12)
+		plt.tight_layout()
+
+		# Show the plot
+		plt.show()
 
 	def run(self):
 		while self.today <= self.end:
@@ -113,7 +146,7 @@ class OptionSimulator:
 
 			# Run the simulation
 			self.strategy.run()
-			print(f"Current Portfolio Size: ${self.get_current_value()} as of {self.today.strftime('%Y-%m-%d')}")
-
+			print(f"Current Portfolio Size: {self.get_current_value():.2f} as of {self.today.strftime('%Y-%m-%d')}")
+			self.logger.record_revenue(self.get_current_value(), self.today.strftime('%Y-%m-%d'))
 
 			self.today += dt.timedelta(days=1)

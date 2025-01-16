@@ -9,9 +9,9 @@ class Strategy:
 
 	def get_premium(self, type):
 		if type == "long call":
-			return int(4 * self.premium * self.simulator.get_price())
+			return float(4 * self.premium * self.simulator.get_price())
 		else:
-			return int(self.premium * self.simulator.get_price())
+			return float(self.premium * self.simulator.get_price())
 
 
 	def is_expired(self, transaction):

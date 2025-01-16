@@ -10,9 +10,10 @@ if __name__ == "__main__":
 	# Declare all the config variables
 	symbol = "^NSEI"
 	capital = 10000000
-	today = dt.date(2024, 1, 1)
-	last_day = dt.date(2024, 2, 1)
+	today = dt.date(2020, 1, 1)
+	last_day = dt.date(2025, 1, 1)
 
 	# Initialise the OptionSimulator Object
 	sim = OptionSimulator(symbol, today, last_day, capital)
 	sim.run()
+	sim.plot()
