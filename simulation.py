@@ -63,7 +63,7 @@ class OptionSimulator:
 
 		# Record the transaction.
 		transaction_id = f"TXN-{uuid.uuid4().hex[:8]}"
-		self.logger.record_transaction(transaction_id, type, strike_price, expiry)
+		self.logger.record_transaction(transaction_id, self.today, type, strike_price, expiry)
 
 		transaction = {
 			"id": transaction_id,
