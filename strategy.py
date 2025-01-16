@@ -1,19 +1,17 @@
 import datetime as dt
 import uuid
 
-from simulation import OptionSimulator
-
 class Strategy:
-	def __init__(self, simulator: OptionSimulator, premium, margin):
+	def __init__(self, simulator, premium, margin):
 		self.simulator = simulator
 		self.premium = premium
 		self.margin = margin
 
-	def get_premium(self, type) -> int:
+	def get_premium(self, type):
 		if type == "long call":
-			return 4 * self.premium * self.simulator.get_price()
+			return int(4 * self.premium * self.simulator.get_price())
 		else:
-			return self.premium * self.simulator.get_price()
+			return int(self.premium * self.simulator.get_price())
 
 
 	def is_expired(self, transaction):
@@ -22,6 +20,9 @@ class Strategy:
 	def should_buy(self):
 		today = self.simulator.today
 		last_transaction = self.simulator.last_transaction
+
+		if last_transaction == -1:
+			return True
 
 		current_week = self.simulator.today.isocalendar().week
 		last_week = last_transaction.isocalendar().week
@@ -39,6 +40,7 @@ class Strategy:
 			if self.simulator.today >= transaction["expiry"]:
 				self.simulator.exit(transaction["type"], transaction["id"])
 
+		# Find out the next expiry
 		days_ahead = (3 - self.simulator.today.weekday() + 7) % 7
 		days_ahead = days_ahead or 7
 
