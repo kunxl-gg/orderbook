@@ -9,7 +9,7 @@ class Strategy:
 
 	def get_premium(self, type):
 		if type == "long call":
-			return float(4 * self.premium * self.simulator.get_price())
+			return float(2.5 * self.premium * self.simulator.get_price())
 		else:
 			return float(self.premium * self.simulator.get_price())
 
@@ -26,6 +26,9 @@ class Strategy:
 
 		current_week = self.simulator.today.isocalendar().week
 		last_week = last_transaction.isocalendar().week
+
+		if today.isoformat() > (self.simulator.end - dt.timedelta(days=28)).isoformat():
+			return False
 
 		if current_week == last_week:
 			return False

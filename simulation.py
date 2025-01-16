@@ -88,7 +88,6 @@ class OptionSimulator:
 
 				break
 
-		# Here you can make the different P&L calculations
 		if type == "long call":
 			profit = min(0, spot_price - strike_price) * quantity
 		elif type == "short call":
@@ -100,10 +99,6 @@ class OptionSimulator:
 
 
 		self.capital += profit
-
-		# Record the transaction.
-		transaction_id = f"TXN-{uuid.uuid4().hex[:8]}"
-		self.logger.record_transaction(transaction_id, type, strike_price, self.today)
 
 	def plot(self):
 		# Lists to store data
@@ -140,7 +135,6 @@ class OptionSimulator:
 			# Check for working days
 			while self.is_holiday():
 				self.today += dt.timedelta(days=1)
-
 				if self.today > self.end:
 					return
 
