@@ -1,9 +1,8 @@
 import csv
 import datetime as dt
-import matplotlib.pyplot as plt
-import logging
-import pandas as pd
 import uuid
+
+import matplotlib.pyplot as plt
 import yfinance as yf
 
 from logger import Logger
