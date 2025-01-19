@@ -75,6 +75,8 @@ class OptionSimulator:
         self.active_transactions.append(transaction)
 
     def exit(self, type, transaction_id):
+        quantity = 0
+        strike_price = 0
         spot_price = self.get_price()
 
         for i, transaction in enumerate(self.active_transactions):
@@ -94,7 +96,7 @@ class OptionSimulator:
             profit = min(0, spot_price - strike_price) * quantity
         elif type == "long put":
             profit = min(0, strike_price - spot_price) * quantity
-        elif type == "short put":
+        else:
             profit = min(0, strike_price - spot_price) * quantity
 
 
