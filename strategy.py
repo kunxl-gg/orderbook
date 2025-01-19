@@ -1,5 +1,4 @@
 import datetime as dt
-import uuid
 
 class Strategy:
     def __init__(self, simulator, premium, margin):
@@ -7,12 +6,11 @@ class Strategy:
         self.premium = premium
         self.margin = margin
 
-    def get_premium(self, type):
-        if type == "long call":
+    def get_premium(self, kind):
+        if kind == "long call":
             return float(2.5 * self.premium * self.simulator.get_price())
-        else:
-            return float(self.premium * self.simulator.get_price())
 
+        return float(self.premium * self.simulator.get_price())
 
     def is_expired(self, transaction):
         return self.simulator.today >= transaction["expiry"]
