@@ -1,5 +1,6 @@
 import csv
 import datetime as dt
+import time
 import uuid
 
 import matplotlib.pyplot as plt
@@ -36,12 +37,8 @@ class OptionSimulator:
 		return today not in self.df["HistoricalDate"].values
 
 	def get_spot_price(self):
-		df = index_history(
-			symbol="NIFTY 50",
-			start_date=self.today.strftime("%d-%b-%Y"),
-			end_date=self.today.strftime("%d-%b-%Y"),
-		)
-		price = df["CLOSE"].values[0]
+		price = self.df.loc[self.df["HistoricalDate"] == self.today.strftime("%d %b %Y"), "CLOSE"]
+		price = price.values[0]
 		return float(price)
 
 	def get_price(self, expiry: dt.date, option_type: str, strike_price: int):
@@ -55,19 +52,24 @@ class OptionSimulator:
 			strikePrice=strike_price
 		)
 
-		if df.empty:
-			return None
 		return df["Price"].values
 
 	def get_current_value(self):
-		return
+		value = self.capital
+		spot_price = self.get_spot_price()
+
+		for transaction in self.active_transactions:
+			if transaction["type"] == "long call":
+				value += (spot_price - transaction["strike_price"]) * transaction["quantity"]
+			elif transaction["type"] == "short call":
+				value += (transaction["strike_price"] - spot_price) * transaction["quantity"]
+
+		return value
 
 	def buy(self, expiry, lot_size, option_type):
-		# Calculate spot and strike prices
 		spot_price = self.get_spot_price()
 		strike_price = round(spot_price / 100) * 100
 
-		# Adjust capital based on the transaction type
 		if type == "long call":
 			self.capital -= lot_size * self.get_price(expiry, option_type, strike_price)
 			self.long_call = True
@@ -88,8 +90,6 @@ class OptionSimulator:
 			expiry=expiry,
 			strike_price=strike_price,
 		)
-
-		# Record the transaction in the logger
 		self.logger.record_transaction(log_details)
 
 		# Add the transaction to the active transactions list
@@ -168,5 +168,13 @@ class OptionSimulator:
 
 			# Run the simulation
 			self.strategy.run()
-			print(f"Today: {self.today.strftime('%d-%b-%Y')}")
+
+			# Record the current revenue
+			print(f"Current Portfolio Size: {self.get_current_value():.2f} as of {self.today.strftime('%Y-%m-%d')}")
+			self.logger.record_revenue(self.get_current_value(), self.today.strftime('%Y-%m-%d'))
+
+			# Increment the day by 1
 			self.today += dt.timedelta(days=1)
+
+			# Accomodate for the rate limiting setup by NSE
+			time.sleep(seconds=1.0)
