@@ -37,7 +37,6 @@
 __pycache__/
 
 # Files
-*.json
 *.log
 *.csv
 .pylintrc

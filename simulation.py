@@ -1,5 +1,6 @@
 import csv
 import datetime as dt
+import json
 import time
 import uuid
 
@@ -26,6 +27,7 @@ class OptionSimulator:
 		self.logger = Logger("transaction.csv", "revenue.csv")
 		self.strategy = CalendarStrategy(self)
 
+		self.expiries = self.get_expiries()
 		self.df = index_history(
 			symbol="NIFTY 50",
 			start_date=self.start.strftime("%d-%b-%Y"),
@@ -35,6 +37,21 @@ class OptionSimulator:
 	def is_holiday(self):
 		today = self.today.strftime("%d %b %Y")
 		return today not in self.df["HistoricalDate"].values
+
+	def get_expiries(self):
+		'''
+		Method to store the read the expiry dates from json and store it in a list
+
+		Initially I was using weekly and monthly Thursdays to be the expiry for each option, but for some options the expiry is on Wednesdays for eg. 13-Apr-2022. I tried to find apis to get historical expiry dates, but couldn't find so, hence I am working with a json file with expiry dates from 2020 to 2025.
+		'''
+		with open("expiry.json", encoding="UTF-8") as f:
+			data = json.load(f)
+		data = data.get("expiresDts", list)
+
+		while dt.datetime.strptime(data[0], "%d-%b-%Y").date() < self.start:
+			data.pop(0)
+
+		return data
 
 	def get_spot_price(self):
 		price = self.df.loc[self.df["HistoricalDate"] == self.today.strftime("%d %b %Y"), "CLOSE"]
@@ -53,7 +70,8 @@ class OptionSimulator:
 		)
 
 		if df.empty:
-			return 0
+			raise ValueError(f"No data found for Date: {self.today.isoformat()}, Option Type: {option_type}, at Strike Price {strike_price}")
+
 		return float(df["FH_CLOSING_PRICE"].values[0])
 
 	def get_current_value(self):
@@ -71,7 +89,8 @@ class OptionSimulator:
 	def buy(self, expiry, lot_size, option_type):
 		spot_price = self.get_spot_price()
 		strike_price = round(spot_price / 100) * 100
-		price = lot_size * self.get_price(expiry, option_type, strike_price)
+		premium = self.get_price(expiry, option_type, strike_price)
+		price = lot_size * premium
 
 		if option_type == "long call":
 			self.capital -= price
@@ -92,7 +111,7 @@ class OptionSimulator:
 			date=self.today,
 			expiry=expiry,
 			strike_price=strike_price,
-			price=price
+			price=premium
 		)
 		self.logger.record_transaction(log_details)
 

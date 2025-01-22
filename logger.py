@@ -18,7 +18,7 @@ class Logger:
 
         with open(self.transactions, "w", newline="", encoding="UTF-8") as f:
             writer = csv.writer(f)
-            writer.writerow(["id", "type", "date", "expiry", "strike_price", "price"])
+            writer.writerow(["id", "type", "date", "expiry", "strike_price", "premium"])
 
         with open(self.revenue, 'w', newline="", encoding="UTF-8") as f:
             writer = csv.writer(f)

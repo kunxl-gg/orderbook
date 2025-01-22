@@ -16,6 +16,13 @@ class CalendarStrategy(Strategy):
 		if last_sold == -1:
 			return False
 
+		if len(self.simulator.expiries) == 0:
+			return False
+
+		expiry = self.simulator.expiries[0]
+		if dt.datetime.strptime(expiry, "%d-%b-%Y").date() > self.simulator.end:
+			return False
+
 		# Buy on the first day after having sold an option
 		if last_sold.isoformat() > last_bought.isoformat():
 			return True
@@ -24,25 +31,26 @@ class CalendarStrategy(Strategy):
 
 	def run(self):
 		# Get number of days to the next Thursday
-		days_ahead = (3 - self.simulator.today.weekday() + 7) % 7
-		days_ahead = days_ahead or 7
-
 		should_buy = self.should_buy()
 
 		# Buy a short call
 		if should_buy:
-			expiry = self.simulator.today + dt.timedelta(days=days_ahead)
+			expiry = dt.datetime.strptime(self.simulator.expiries[0], "%d-%b-%Y").date()
+			self.simulator.buy(expiry, 75, "short call")
 
-			if expiry < self.simulator.end:
-				self.simulator.buy(expiry, 100, "short call")
+			# Remove the expiry date
+			self.simulator.expiries.pop(0)
 
 		# Buy a long call if you don't have any
 		if should_buy and not self.simulator.long_call:
-			days_ahead = days_ahead + 3 * 7
-			expiry = self.simulator.today + dt.timedelta(days=days_ahead)
-
-			if expiry <= self.simulator.end:
-				self.simulator.buy(expiry, 100, "long call")
+			target_month = dt.datetime.strptime(self.simulator.expiries[0], "%d-%b-%Y").date().month
+			for e in self.simulator.expiries:
+				if dt.datetime.strptime(e, "%d-%b-%Y").date().month == target_month:
+					exp = e
+				else:
+					break
+			expiry = dt.datetime.strptime(exp, "%d-%b-%Y").date()
+			self.simulator.buy(expiry, 75, "long call")
 
 		# Check for expired options
 		for transaction in self.simulator.active_transactions:
