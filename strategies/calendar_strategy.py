@@ -13,7 +13,7 @@ class CalendarStrategy(Strategy):
 		if last_bought == -1:
 			return True
 
-		if last_sold:
+		if last_sold == -1:
 			return False
 
 		# Buy on the first day after having sold an option
@@ -23,11 +23,6 @@ class CalendarStrategy(Strategy):
 		return False
 
 	def run(self):
-		# Check for expired options
-		for transaction in self.simulator.active_transactions:
-			if self.simulator.today >= transaction["expiry"]:
-				self.simulator.exit(transaction["id"])
-
 		# Get number of days to the next Thursday
 		days_ahead = (3 - self.simulator.today.weekday() + 7) % 7
 		days_ahead = days_ahead or 7
@@ -39,7 +34,7 @@ class CalendarStrategy(Strategy):
 			expiry = self.simulator.today + dt.timedelta(days=days_ahead)
 
 			if expiry < self.simulator.end:
-				self.simulator.buy(expiry, 10, "short call")
+				self.simulator.buy(expiry, 25, "short call")
 
 		# Buy a long call if you don't have any
 		if should_buy and not self.simulator.long_call:
@@ -47,4 +42,9 @@ class CalendarStrategy(Strategy):
 			expiry = self.simulator.today + dt.timedelta(days=days_ahead)
 
 			if expiry <= self.simulator.end:
-				self.simulator.buy(expiry, 10, "long call")
+				self.simulator.buy(expiry, 100, "long call")
+
+		# Check for expired options
+		for transaction in self.simulator.active_transactions:
+			if self.simulator.today >= transaction["expiry"]:
+				self.simulator.exit(transaction["id"])

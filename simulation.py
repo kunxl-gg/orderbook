@@ -48,11 +48,13 @@ class OptionSimulator:
 			end_date=self.today.strftime("%d-%m-%Y"),
 			expiry_date=expiry.strftime("%d-%b-%Y"),
 			instrumentType="options",
-			optionType=option_type,
+			optionType="CE",
 			strikePrice=strike_price
 		)
 
-		return df["Price"].values
+		if df.empty:
+			return 0
+		return float(df["FH_CLOSING_PRICE"].values[0])
 
 	def get_current_value(self):
 		value = self.capital
@@ -69,12 +71,13 @@ class OptionSimulator:
 	def buy(self, expiry, lot_size, option_type):
 		spot_price = self.get_spot_price()
 		strike_price = round(spot_price / 100) * 100
+		price = lot_size * self.get_price(expiry, option_type, strike_price)
 
-		if type == "long call":
-			self.capital -= lot_size * self.get_price(expiry, option_type, strike_price)
+		if option_type == "long call":
+			self.capital -= price
 			self.long_call = True
-		elif type == "short call":
-			self.capital += self.get_price(expiry, option_type, strike_price) * lot_size
+		else:
+			self.capital += price
 
 		# Update the last transaction date
 		self.last_bought = self.today
@@ -89,6 +92,7 @@ class OptionSimulator:
 			date=self.today,
 			expiry=expiry,
 			strike_price=strike_price,
+			price=price
 		)
 		self.logger.record_transaction(log_details)
 
@@ -105,7 +109,7 @@ class OptionSimulator:
 	def exit(self, transaction_id):
 		quantity = 0
 		option_type = ""
-		strike_price = 0
+		strike_price = 0.0
 		spot_price = self.get_spot_price()
 
 		for i, transaction in enumerate(self.active_transactions):
@@ -138,7 +142,7 @@ class OptionSimulator:
 			reader = csv.reader(f)
 			data = list(reader)
 
-			for row in range(1, len(data), 100):
+			for row in range(1, len(data), 20):
 				dates.append(data[row][1])
 				capitals.append(float(data[row][0]))
 
@@ -177,4 +181,4 @@ class OptionSimulator:
 			self.today += dt.timedelta(days=1)
 
 			# Accomodate for the rate limiting setup by NSE
-			time.sleep(seconds=1.0)
+			time.sleep(1.0)
