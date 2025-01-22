@@ -32,14 +32,19 @@ class CalendarStrategy(Strategy):
 		days_ahead = (3 - self.simulator.today.weekday() + 7) % 7
 		days_ahead = days_ahead or 7
 
+		should_buy = self.should_buy()
+
 		# Buy a short call
-		if self.should_buy():
+		if should_buy:
 			expiry = self.simulator.today + dt.timedelta(days=days_ahead)
-			self.simulator.buy(expiry, 10, "short call")
+
+			if expiry < self.simulator.end:
+				self.simulator.buy(expiry, 10, "short call")
 
 		# Buy a long call if you don't have any
-		if self.should_buy() and not self.simulator.long_call:
+		if should_buy and not self.simulator.long_call:
 			days_ahead = days_ahead + 3 * 7
 			expiry = self.simulator.today + dt.timedelta(days=days_ahead)
 
-			self.simulator.buy(expiry, 10, "long call")
+			if expiry <= self.simulator.end:
+				self.simulator.buy(expiry, 10, "long call")
