@@ -1,19 +1,17 @@
 import datetime as dt
-import numpy as np
-import pandas as pd
-import yfinance as yf
+
+from nsepython import derivative_history, index_history
 
 from logger import Logger
 from simulation import OptionSimulator
 
 if __name__ == "__main__":
-	# Declare all the config variables
-	symbol = "^NSEI"
+	# Config Variables
+	symbol = "NIFTY 50"
 	capital = 10000000
-	today = dt.date(2019, 1, 1)
-	last_day = dt.date(2025, 1, 1)
+	start = dt.date(2024, 1, 1)
+	end = dt.date(2024, 1, 7)
 
-	# Initialise the OptionSimulator Object
-	sim = OptionSimulator(symbol, today, last_day, capital)
+	# Initialising the OptionSimulator
+	sim = OptionSimulator(symbol=symbol, start=start, end=end, capital=capital)
 	sim.run()
-	sim.plot()

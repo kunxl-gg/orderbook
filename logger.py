@@ -7,7 +7,7 @@ class LogDetails:
     id: int
     kind: str
     date: dt.date
-    expiry = dt.date
+    expiry: dt.date
     strike_price: float
 
 class Logger:
@@ -26,8 +26,7 @@ class Logger:
     def record_transaction(self, log: LogDetails):
         with open(self.file_path, "a", newline="", encoding="UTF-8") as f:
             writer = csv.writer(f)
-            writer.writerow([log.id, log.kind, log.date,
-                             log.expiry, log.strike_price])
+            writer.writerow([log.id, log.kind, log.date, log.expiry, log.strike_price])
 
     def record_revenue(self, revenue, date):
         with open(self.log_file, "a", newline="", encoding="UTF-8") as f:
