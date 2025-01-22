@@ -32,7 +32,7 @@ class OptionSimulator:
 		)
 
 	def is_holiday(self):
-		today = self.today.strftime("%d-%b-%Y")
+		today = self.today.strftime("%d %b %Y")
 		return today not in self.df["HistoricalDate"].values
 
 	def get_spot_price(self):
