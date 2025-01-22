@@ -6,5 +6,9 @@ class Strategy(ABC):
 		pass
 
 	@abstractmethod
+	def should_buy(self):
+		pass
+	
+	@abstractmethod
 	def run(self):
 		pass
