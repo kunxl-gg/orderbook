@@ -44,7 +44,6 @@ class OptionSimulator:
 		price = df["CLOSE"].values[0]
 		return float(price)
 
-
 	def get_price(self, expiry: dt.date, option_type: str, strike_price: int):
 		df = derivative_history(
 			symbol=self.symbol,
@@ -102,7 +101,6 @@ class OptionSimulator:
 			"expiry": expiry,
 		}
 		self.active_transactions.append(transaction)
-
 
 	def exit(self, transaction_id):
 		quantity = 0
