@@ -11,24 +11,24 @@ class LogDetails:
     strike_price: float
 
 class Logger:
-    def __init__(self, file_path, log_file):
-        self.file_path = file_path
-        self.log_file = log_file
+    def __init__(self, transactions, revenue):
+        self.transactions = transactions
+        self.revenue = revenue
 
-        with open(self.file_path, "w", newline="", encoding="UTF-8") as f:
+        with open(self.transactions, "w", newline="", encoding="UTF-8") as f:
             writer = csv.writer(f)
-            writer.writerow(["id", "date", "type", "strike_price", "expiry"])
+            writer.writerow(["id", "type", "date", "expiry", "strike_price"])
 
-        with open(self.log_file, 'w', newline="", encoding="UTF-8") as f:
+        with open(self.revenue, 'w', newline="", encoding="UTF-8") as f:
             writer = csv.writer(f)
             writer.writerow(["capital", "date"])
 
     def record_transaction(self, log: LogDetails):
-        with open(self.file_path, "a", newline="", encoding="UTF-8") as f:
+        with open(self.transactions, "a", newline="", encoding="UTF-8") as f:
             writer = csv.writer(f)
             writer.writerow([log.id, log.kind, log.date, log.expiry, log.strike_price])
 
     def record_revenue(self, revenue, date):
-        with open(self.log_file, "a", newline="", encoding="UTF-8") as f:
+        with open(self.revenue, "a", newline="", encoding="UTF-8") as f:
             writer = csv.writer(f)
             writer.writerow([revenue, date])
