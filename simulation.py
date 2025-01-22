@@ -181,4 +181,4 @@ class OptionSimulator:
 			self.today += dt.timedelta(days=1)
 
 			# Accomodate for the rate limiting setup by NSE
-			time.sleep(1.0)
+			time.sleep(0.5)

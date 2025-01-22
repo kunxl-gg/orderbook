@@ -34,7 +34,7 @@ class CalendarStrategy(Strategy):
 			expiry = self.simulator.today + dt.timedelta(days=days_ahead)
 
 			if expiry < self.simulator.end:
-				self.simulator.buy(expiry, 25, "short call")
+				self.simulator.buy(expiry, 100, "short call")
 
 		# Buy a long call if you don't have any
 		if should_buy and not self.simulator.long_call:
