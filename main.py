@@ -1,7 +1,5 @@
 import datetime as dt
 
-from nsepython import derivative_history, index_history
-
 from logger import Logger
 from simulation import OptionSimulator
 
@@ -9,7 +7,7 @@ if __name__ == "__main__":
 	# Config Variables
 	symbol = "NIFTY"
 	capital = 10000000
-	start = dt.date(2022, 1, 1)
+	start = dt.date(2021, 1, 1)
 	end = dt.date(2025, 1, 1)
 
 	# Initialising the OptionSimulator
