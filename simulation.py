@@ -60,7 +60,7 @@ class OptionSimulator:
 		)
 
 		if df.empty:
-			raise ValueError(f"No data found for Date: {self.today.isoformat()}, Option Type: {option_type}, at Strike Price {strike_price}")
+			return None
 
 		return float(df["FH_CLOSING_PRICE"].values[0])
 
@@ -80,6 +80,10 @@ class OptionSimulator:
 		spot_price = self.get_spot_price()
 		strike_price = round(spot_price / 100) * 100
 		premium = self.get_price(expiry, option_type, strike_price)
+
+		if premium is None:
+			return
+
 		price = lot_size * premium
 
 		if option_type == "long call":
