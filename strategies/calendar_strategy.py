@@ -33,14 +33,6 @@ class CalendarStrategy(Strategy):
 		# Get number of days to the next Thursday
 		should_buy = self.should_buy()
 
-		# Buy a short call
-		if should_buy:
-			expiry = dt.datetime.strptime(self.simulator.expiries[0], "%d-%b-%Y").date()
-			self.simulator.buy(expiry, 75, "short call")
-
-			# Remove the expiry date
-			self.simulator.expiries.pop(0)
-
 		# Buy a long call if you don't have any
 		if should_buy and not self.simulator.long_call:
 			target_month = dt.datetime.strptime(self.simulator.expiries[0], "%d-%b-%Y").date().month
@@ -51,6 +43,14 @@ class CalendarStrategy(Strategy):
 					break
 			expiry = dt.datetime.strptime(exp, "%d-%b-%Y").date()
 			self.simulator.buy(expiry, 75, "long call")
+
+		# Buy a short call
+		elif should_buy:
+			expiry = dt.datetime.strptime(self.simulator.expiries[0], "%d-%b-%Y").date()
+			self.simulator.buy(expiry, 75, "short call")
+
+			# Remove the expiry date
+			self.simulator.expiries.pop(0)
 
 		# Check for expired options
 		for transaction in self.simulator.active_transactions:

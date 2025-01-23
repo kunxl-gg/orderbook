@@ -1,6 +1,5 @@
 import csv
 import datetime as dt
-import json
 import time
 import uuid
 
@@ -48,7 +47,7 @@ class OptionSimulator:
 		price = price.values[0]
 		return float(price)
 
-	def get_price(self, expiry: dt.date, option_type: str, strike_price: int):
+	def get_price(self, expiry: dt.date, strike_price: int):
 		df = derivative_history(
 			symbol=self.symbol,
 			start_date=self.today.strftime("%d-%m-%Y"),
@@ -79,7 +78,7 @@ class OptionSimulator:
 	def buy(self, expiry, lot_size, option_type):
 		spot_price = self.get_spot_price()
 		strike_price = round(spot_price / 100) * 100
-		premium = self.get_price(expiry, option_type, strike_price)
+		premium = self.get_price(expiry, strike_price)
 
 		if premium is None:
 			return
