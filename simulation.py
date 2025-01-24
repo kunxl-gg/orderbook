@@ -4,7 +4,7 @@ import time
 import uuid
 
 import matplotlib.pyplot as plt
-from nsepython import *
+from nsepython import derivative_history, index_history, expiry_history
 
 from logger import Logger, LogDetails
 from strategies.calendar_strategy import CalendarStrategy
@@ -48,6 +48,7 @@ class OptionSimulator:
 		return float(price)
 
 	def get_price(self, expiry: dt.date, strike_price: int):
+		print(self.today.strftime("%d-%b-%Y"), strike_price, expiry.strftime("%d-%b-%Y"))
 		df = derivative_history(
 			symbol=self.symbol,
 			start_date=self.today.strftime("%d-%m-%Y"),
@@ -57,9 +58,6 @@ class OptionSimulator:
 			optionType="CE",
 			strikePrice=strike_price
 		)
-
-		if df.empty:
-			return None
 
 		return float(df["FH_CLOSING_PRICE"].values[0])
 
@@ -75,7 +73,7 @@ class OptionSimulator:
 
 		return value
 
-	def buy(self, expiry, lot_size, option_type):
+	def enter(self, expiry, lot_size, option_type):
 		spot_price = self.get_spot_price()
 		strike_price = round(spot_price / 100) * 100
 		premium = self.get_price(expiry, strike_price)
@@ -83,7 +81,10 @@ class OptionSimulator:
 		if premium is None:
 			return
 
-		price = lot_size * premium
+		capital = min(self.capital, 10000000)
+		quantity = capital / strike_price
+		price = quantity * lot_size * premium
+		print(price, capital, quantity, self.today.strftime("%d-%b-%Y"))
 
 		if option_type == "long call":
 			self.capital -= price

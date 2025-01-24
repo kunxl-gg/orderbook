@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 @dataclass
 class LogDetails:
-    id: int
+    id: str
     kind: str
     date: dt.date
     expiry: dt.date

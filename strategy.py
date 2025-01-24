@@ -24,7 +24,7 @@ class Strategy(ABC):
         pass
 
     @abstractmethod
-    def should_buy(self):
+    def should_buy(self) -> bool:
         """
         Determines whether a buy action should be taken.
 
