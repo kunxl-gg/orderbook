@@ -18,6 +18,8 @@ class OptionSimulator:
 		self.start = start
 		self.end = end
 
+		self.margin = 0
+
 		self.long_call = False
 		self.last_bought = -1
 		self.last_sold = -1
@@ -48,7 +50,6 @@ class OptionSimulator:
 		return float(price)
 
 	def get_price(self, expiry: dt.date, strike_price: int):
-		print(self.today.strftime("%d-%b-%Y"), strike_price, expiry.strftime("%d-%b-%Y"))
 		df = derivative_history(
 			symbol=self.symbol,
 			start_date=self.today.strftime("%d-%m-%Y"),
@@ -58,6 +59,9 @@ class OptionSimulator:
 			optionType="CE",
 			strikePrice=strike_price
 		)
+
+		if df.empty:
+			return None
 
 		return float(df["FH_CLOSING_PRICE"].values[0])
 
@@ -73,6 +77,11 @@ class OptionSimulator:
 
 		return value
 
+	def get_margin(self, spot_price: float, strike_price: int):
+        # 20% of Spot Price minus Out-of-the-Money Amount:
+		OTM = max(0, strike_price - spot_price)
+		return 0.2 * spot_price - OTM
+
 	def enter(self, expiry, lot_size, option_type):
 		spot_price = self.get_spot_price()
 		strike_price = round(spot_price / 100) * 100
@@ -83,14 +92,21 @@ class OptionSimulator:
 
 		capital = min(self.capital, 10000000)
 		quantity = capital / strike_price
-		price = quantity * lot_size * premium
-		print(price, capital, quantity, self.today.strftime("%d-%b-%Y"))
+		quantity //= lot_size
+		quantity *= lot_size
+
+		price = quantity * premium
 
 		if option_type == "long call":
 			self.capital -= price
 			self.long_call = True
 		else:
 			self.capital += price
+
+			# Accomodate for margin
+			margin = self.get_margin(spot_price, strike_price)
+			self.margin = margin
+			self.capital -= margin
 
 		# Update the last transaction date
 		self.last_bought = self.today
@@ -113,7 +129,7 @@ class OptionSimulator:
 		transaction = {
 			"id": transaction_id,
 			"type": option_type,
-			"quantity": lot_size,
+			"quantity": quantity,
 			"strike_price": strike_price,
 			"expiry": expiry,
 		}
@@ -138,9 +154,10 @@ class OptionSimulator:
 				break
 
 		if option_type == "long call":
-			profit = min(0, spot_price - strike_price) * quantity
+			profit = max(0, spot_price - strike_price) * quantity
 		else:
-			profit = min(0, spot_price - strike_price) * quantity
+			profit = -max(0, spot_price - strike_price) * quantity
+			profit += self.margin
 
 		self.capital += profit
 		self.last_sold = self.today

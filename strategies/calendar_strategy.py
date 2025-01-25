@@ -36,18 +36,18 @@ class CalendarStrategy(Strategy):
 		# Buy a long call if you don't have any
 		if should_buy and not self.simulator.long_call:
 			target_month = dt.datetime.strptime(self.simulator.expiries[0], "%d-%b-%Y").date().month
-			print(target_month)
+
 			for e in self.simulator.expiries:
 				if dt.datetime.strptime(e, "%d-%b-%Y").date().month == target_month:
 					exp = e
 				else:
 					break
+
 			expiry = dt.datetime.strptime(exp, "%d-%b-%Y").date()
-			print(type(expiry), expiry.strftime("%d-%b-%Y"))
 			self.simulator.enter(expiry, 75, "long call")
 
 		# Buy a short call
-		elif should_buy:
+		if should_buy:
 			expiry = dt.datetime.strptime(self.simulator.expiries[0], "%d-%b-%Y").date()
 			self.simulator.enter(expiry, 75, "short call")
 
