@@ -49,6 +49,11 @@ class OptionSimulator:
 		price = price.values[0]
 		return float(price)
 
+	def get_margin(self, spot_price: float, strike_price: int):
+        # 20% of Spot Price minus Out-of-the-Money Amount:
+		OTM = max(0, strike_price - spot_price)
+		return 0.2 * spot_price - OTM
+
 	def get_price(self, expiry: dt.date, strike_price: int):
 		df = derivative_history(
 			symbol=self.symbol,
@@ -76,11 +81,6 @@ class OptionSimulator:
 				value += (transaction["strike_price"] - spot_price) * transaction["quantity"]
 
 		return value
-
-	def get_margin(self, spot_price: float, strike_price: int):
-        # 20% of Spot Price minus Out-of-the-Money Amount:
-		OTM = max(0, strike_price - spot_price)
-		return 0.2 * spot_price - OTM
 
 	def enter(self, expiry, lot_size, option_type):
 		spot_price = self.get_spot_price()
